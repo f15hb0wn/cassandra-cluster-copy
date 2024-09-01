@@ -1,9 +1,10 @@
 # cassandra-cluster-copy
 Utility for copying data from one Cassandra Cluster Keyspace to another
 # Usage
-1) Edit `.env` with appropriate connection settings
-2) Manually create Keyspace and table schema on destination cluster
-3) Run `go run .` answering any missing prompts
+1) Download source or release files
+2) Edit `.env` with appropriate connection settings
+3) Manually create Keyspace and table schema on destination cluster
+4) Run `go run .` (from source) `./cassandra-cluster-copy` (Ubuntu) `cassandra-cluster-copy.exe` (Windows) answering any missing prompts
 
 # Notes
 - Executable can be built using `go build` if portable binary is desired
