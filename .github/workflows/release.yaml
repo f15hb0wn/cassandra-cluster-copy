@@ -1,0 +1,99 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            ext: ""
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            ext: ".exe"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.23.0
+
+      - name: Build binary
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o cassandra-cluster-copy${{ matrix.ext }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: cassandra-cluster-copy-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: cassandra-cluster-copy${{ matrix.ext }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: cassandra-cluster-copy-linux-amd64
+          path: ./binaries/linux
+      - uses: actions/download-artifact@v2
+        with:
+          name: cassandra-cluster-copy-windows-amd64
+          path: ./binaries/windows
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset (Linux)
+        uses: actions/upload-release-asset@v1
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./binaries/linux/cassandra-cluster-copy
+          asset_name: cassandra-cluster-copy-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Windows)
+        uses: actions/upload-release-asset@v1
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./binaries/windows/cassandra-cluster-copy.exe
+          asset_name: cassandra-cluster-copy-windows-amd64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Source Code
+        uses: actions/upload-release-asset@v1
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .
+          asset_name: source-code.zip
+          asset_content_type: application/zip
