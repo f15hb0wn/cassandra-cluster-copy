@@ -63,6 +63,9 @@ jobs:
           name: cassandra-cluster-copy-windows-amd64
           path: ./binaries/windows
 
+      - name: Create zip file of source code
+        run: zip -r source-code.zip .
+        
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -100,6 +103,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .
+          asset_path: ./source-code.zip
           asset_name: source-code.zip
           asset_content_type: application/zip
